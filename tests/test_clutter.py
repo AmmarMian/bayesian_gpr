@@ -16,14 +16,18 @@ def test_clutter_rank():
 
 
 def test_clutter_snr_scaling():
+    # SNR = 20·log10(signal_peak / clutter_rms) = snr_db
+    # → rms(L) = signal_peak · 10^(-snr_db/20)
     rng_target = np.random.default_rng(99)
     target = rng_target.standard_normal((GRID.Nt, GRID.Nx))
+    snr_db = 10.0
     L = low_rank_clutter(
-        GRID, rank=3, snr_db=10.0, target_image=target, rng=np.random.default_rng(1)
+        GRID, rank=3, snr_db=snr_db, target_image=target, rng=np.random.default_rng(1)
     )
-    actual_ratio = np.linalg.norm(L, "fro") / np.linalg.norm(target, "fro")
-    expected_ratio = 10 ** (-10.0 / 20.0)
-    assert abs(actual_ratio - expected_ratio) / expected_ratio < 0.01
+    signal_peak = np.max(np.abs(target))
+    clutter_rms = np.linalg.norm(L, "fro") / np.sqrt(L.size)
+    expected_rms = signal_peak * 10 ** (-snr_db / 20.0)
+    assert abs(clutter_rms - expected_rms) / expected_rms < 0.01
 
 
 def test_clutter_no_scaling_without_target():

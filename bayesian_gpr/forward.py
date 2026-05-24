@@ -1,4 +1,5 @@
 """Forward simulator: Ricker wavelet, per-atom hyperbola rendering, scene rendering."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -7,7 +8,7 @@ from .scene import Atom, Scene, SceneGrid, SoilParams, WaveletParams
 
 
 def ricker(tau: np.ndarray, f0: float) -> np.ndarray:
-    """Ricker wavelet (second derivative of Gaussian).
+    """Ricker wavelet
 
     Parameters
     ----------
@@ -27,8 +28,8 @@ def _hyperbola_locus(atom: Atom, x_axis: np.ndarray, v: float) -> np.ndarray:
 
     For radius R=0 and x=x0, returns t_apex = 2*depth/v exactly.
     """
-    p = atom.depth + atom.R          # effective depth including scatterer radius
-    t_apex = 2.0 * atom.depth / v   # apex two-way travel time
+    p = atom.depth + atom.R  # effective depth including scatterer radius
+    t_apex = 2.0 * atom.depth / v  # apex two-way travel time
     return (2.0 / v) * (np.sqrt(p**2 + (x_axis - atom.x0) ** 2) - p) + t_apex
 
 
@@ -41,15 +42,24 @@ def render_atom(
 ) -> np.ndarray:
     """Render one atom's hyperbola contribution onto a (Nt, Nx) array.
 
+    Attenuation per column x:
+      - Cylindrical geometric spreading: sqrt(p / slant_range), normalised at apex.
+      - Material absorption: exp(-2 * soil.alpha * slant_range) (two-way path).
+    atom.amplitude sets the reflection coefficient at the apex.
+
     Parameters
     ----------
     out : if given, add in-place (useful for MCMC incremental updates)
     """
     if out is None:
         out = np.zeros((grid.Nt, grid.Nx))
-    t_locus = _hyperbola_locus(atom, grid.x_axis, soil.v)   # (Nx,)
-    tau = grid.t_axis[:, None] - t_locus[None, :]            # (Nt, Nx)
-    out += atom.amplitude * ricker(tau, wavelet.f0)
+    p = atom.depth + atom.R
+    r_slant = np.sqrt(p**2 + (grid.x_axis - atom.x0) ** 2)         # (Nx,) one-way slant range
+    spread = np.sqrt(p / r_slant)                                     # cylindrical spreading (1 at apex)
+    absorb = np.exp(-2.0 * soil.alpha * r_slant)                      # two-way absorption (depth-dependent)
+    t_locus = _hyperbola_locus(atom, grid.x_axis, soil.v)            # (Nx,)
+    tau = grid.t_axis[:, None] - t_locus[None, :]                    # (Nt, Nx)
+    out += atom.amplitude * (spread * absorb)[None, :] * ricker(tau, wavelet.f0)
     return out
 
 
@@ -106,25 +116,28 @@ def render_via_conv(scene: Scene) -> np.ndarray:
         groups.setdefault(atom.R, []).append(atom)
 
     for R, atoms_grp in groups.items():
-        # Template H: apex at pixel (0, 0), i.e. depth=0, x0=0.
-        # H[i,j] = ricker(t_axis[i] - (2/v)*(sqrt(R²+x_axis[j]²) - R), f0)
-        template_atom = Atom(x0=0.0, depth=0.0, R=R, eps_r=1.0, amplitude=1.0)
-        H = render_atom(template_atom, grid, wavelet, soil)
+        # Build template on a SYMMETRIC x-axis centred at 0:
+        #   x_sym = [-Nx*dx, ..., -dx, 0, dx, ..., (Nx-1)*dx]  (2*Nx points)
+        # so both wings of the hyperbola are captured.
+        # Apex sits at column Nx (where x_sym = 0); roll left by Nx → apex at col 0.
+        x_sym = (np.arange(2 * Nx) - Nx) * grid.dx  # (2*Nx,)
+        locus_sym = (2.0 / soil.v) * (np.sqrt(R**2 + x_sym**2) - R)  # (2*Nx,)
+        tau_sym = grid.t_axis[:, None] - locus_sym[None, :]  # (Nt, 2*Nx)
+        H_full = ricker(tau_sym, wavelet.f0)  # apex at col Nx
+        H_rolled = np.roll(H_full, -Nx, axis=1)  # apex at col 0
 
-        # Coefficient map C: delta at each atom's (it_apex, ix0), scaled by amplitude
-        C = np.zeros((Nt, Nx))
+        # Zero-pad in time to 2*Nt to avoid time-axis wrap-around
+        H_pad = np.zeros((2 * Nt, 2 * Nx))
+        H_pad[:Nt, :] = H_rolled
+
+        # Coefficient map: delta at each atom's (it_apex, ix0)
+        C_pad = np.zeros((2 * Nt, 2 * Nx))
         for atom in atoms_grp:
             t_apex = 2.0 * atom.depth / soil.v
             it = int(round((t_apex / grid.t_max) * (Nt - 1)))
             ix = int(round((atom.x0 / grid.x_extent) * (Nx - 1)))
-            C[max(0, min(Nt - 1, it)), max(0, min(Nx - 1, ix))] += atom.amplitude
+            C_pad[max(0, min(2 * Nt - 1, it)), max(0, min(2 * Nx - 1, ix))] += atom.amplitude
 
-        # Zero-pad to avoid circular wrap-around, then crop back
-        Nt2, Nx2 = 2 * Nt, 2 * Nx
-        H_pad = np.zeros((Nt2, Nx2))
-        C_pad = np.zeros((Nt2, Nx2))
-        H_pad[:Nt, :Nx] = H
-        C_pad[:Nt, :Nx] = C
         conv = np.real(np.fft.ifft2(np.fft.fft2(H_pad) * np.fft.fft2(C_pad)))
         out += conv[:Nt, :Nx]
 

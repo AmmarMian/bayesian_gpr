@@ -44,9 +44,15 @@ class WaveletParams:
 
 @dataclass(frozen=True)
 class SoilParams:
-    """Soil electromagnetic properties."""
+    """Soil electromagnetic properties.
 
-    eps_r: float  # relative permittivity
+    alpha : one-way EM attenuation coefficient (Np/m).  Typical values at 400 MHz:
+            dry sand ≈ 0.01, moist soil ≈ 0.1–0.3, wet clay ≈ 1.0.
+            Default 0 (lossless) for backward compatibility.
+    """
+
+    eps_r: float
+    alpha: float = 0.0  # one-way attenuation, Np/m
 
     @property
     def v(self) -> float:

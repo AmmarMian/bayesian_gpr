@@ -6,7 +6,12 @@ build-backend = "hatchling.build"
 name = "bayesian-gpr"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["numpy", "scipy", "matplotlib"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "ipython>=9.13.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
