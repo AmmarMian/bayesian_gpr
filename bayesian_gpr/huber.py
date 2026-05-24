@@ -1,4 +1,5 @@
 """Huber loss function. Returns a cost value, not a log-density."""
+
 import numpy as np
 
 
@@ -11,7 +12,6 @@ def huber(r: np.ndarray, delta: float) -> np.ndarray:
 def huber_total(D_obs: np.ndarray, D_sim: np.ndarray, delta: float) -> float:
     """Sum of element-wise Huber loss on the residual.
 
-    Returns a cost (not a log-density). Stella's MCMC code decides how to
-    convert this to a log-likelihood for the Metropolis-Hastings ratio.
+    Returns a cost (not a log-density).
     """
     return float(huber(D_obs - D_sim, delta).sum())

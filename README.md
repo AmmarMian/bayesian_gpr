@@ -1,10 +1,7 @@
 # bayesian-gpr
 
 GPR physics building blocks for Bayesian MCMC inversion.
-Built for Colin Fox's group (University of Otago).
 
-**Scope**: forward simulator + scene builder + clutter generator + Huber norm.
-The MCMC sampler, priors, and likelihood are the caller's responsibility.
 
 ## Install
 
@@ -44,7 +41,7 @@ Run the full demo (saves `data/demo_pipes.{npz,png}`):
 python scripts/make_demo_scene.py
 ```
 
-## Using from Stella's MCMC
+## Using from MCMC
 
 ```python
 from bayesian_gpr import Scene, render_atoms, huber_total
@@ -70,6 +67,7 @@ cost = huber_total(D_obs, D_sim, delta=0.05)
 | Pipe radius | 0.05 m | 0.01–0.20 m |
 | Rebar radius | 0.01 m | 0.006–0.025 m |
 | Void radius | 0.10 m | 0.05–0.50 m |
+| Material absorbtion (alpha) | 0 | ~|
 
 Typical `eps_r` values for object fill: air 1.0 · PVC/dry concrete 3–6 · water ~80.
 
@@ -79,6 +77,3 @@ Typical `eps_r` values for object fill: air 1.0 · PVC/dry concrete 3–6 · wat
 
 `render_atoms(scene, method='conv')` or `render_via_conv(scene)` — FFT convolution approximation, faster for large scenes. Approximate because hyperbola curvature depends on depth (p = depth + R), so a single centred template cannot represent atoms at different depths exactly.
 
-## Phase 2 (planned, not yet implemented)
-
-gprMax integration for realistic FDTD-based scenes and Peplinski heterogeneous-soil clutter. See `CLAUDE.md`.

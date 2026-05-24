@@ -2,9 +2,10 @@
 
 Generates a random rank-k matrix L = U @ V.T to model horizontally-layered
 ground clutter. This is a *generator* (one random draw), not a fitter.
-Stella's MCMC code can write a proposal that moves U and V if she wants to
+MCMC code can write a proposal that moves U and V if wanting to
 sample over clutter as part of the posterior.
 """
+
 from __future__ import annotations
 
 import numpy as np
