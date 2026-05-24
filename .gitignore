@@ -1,0 +1,12 @@
+__pycache__/
+*.egg-info/
+.venv/
+.uv/
+dist/
+*.pyc
+*.pyo
+.pytest_cache/
+data/*.npz
+data/*.png
+!data/demo_pipes.npz
+!data/demo_pipes.png
