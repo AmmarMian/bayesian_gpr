@@ -24,6 +24,7 @@ def save_scene(scene: Scene, path: str | Path) -> None:
         "dt": np.float64(scene.grid.dt),
         "f0": np.float64(scene.wavelet.f0),
         "eps_soil": np.float64(scene.soil.eps_r),
+        "alpha_soil": np.float64(scene.soil.alpha),
         "rng_seed": np.int64(-1 if scene.rng_seed is None else scene.rng_seed),
         "atoms_x0": np.array([a.x0 for a in scene.atoms], dtype=np.float64),
         "atoms_depth": np.array([a.depth for a in scene.atoms], dtype=np.float64),
@@ -49,7 +50,10 @@ def load_scene(path: str | Path) -> Scene:
         dt=float(data["dt"]),
     )
     wavelet = WaveletParams(f0=float(data["f0"]))
-    soil = SoilParams(eps_r=float(data["eps_soil"]))
+    soil = SoilParams(
+        eps_r=float(data["eps_soil"]),
+        alpha=float(data["alpha_soil"]) if "alpha_soil" in data else 0.0,
+    )
     rng_seed_raw = int(data["rng_seed"])
     rng_seed = None if rng_seed_raw == -1 else rng_seed_raw
 

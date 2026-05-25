@@ -21,7 +21,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from bayesian_gpr import Scene, SceneGrid, WaveletParams, SoilParams, presets
+from bayesian_gpr import Scene, SceneGrid, WaveletParams, SoilParams, presets, plot_scene_layout
 from bayesian_gpr.viz import plot_bscan
 
 # ── Scene definition ─────────────────────────────────────────────────────────
@@ -87,7 +87,12 @@ plot_bscan(scene.observed(), scene.grid, title="Observed B-scan (image + clutter
 plt.savefig("data/demo_pipes_data.png", dpi=150, bbox_inches="tight")
 plt.close("all")
 
-print("Saved data/demo_pipes.npz and data/demo_pipes.png")
+# Physical cross-section layout
+plot_scene_layout(scene)
+plt.savefig("data/demo_pipes_layout.png", dpi=150, bbox_inches="tight")
+plt.close("all")
+
+print("Saved data/demo_pipes.npz, demo_pipes.png, demo_pipes_data.png, demo_pipes_layout.png")
 print(f"  Grid: {scene.grid.Nt} time samples × {scene.grid.Nx} antenna positions")
 print(f"  Atoms: {len(scene.atoms)}")
 print("  Soil wave speed: {:.4f} m/ns".format(scene.soil.v * 1e-9))

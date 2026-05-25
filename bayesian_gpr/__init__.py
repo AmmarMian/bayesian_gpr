@@ -6,6 +6,7 @@ function. The MCMC sampler, priors, and likelihood are the caller's responsibili
 from .scene import Atom, Scene, SceneGrid, SoilParams, WaveletParams
 from .forward import render_atoms, render_via_conv, ricker
 from .huber import huber, huber_total
+from .viz import plot_scene_layout
 from . import presets
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "ricker",
     "huber",
     "huber_total",
+    "plot_scene_layout",
     "presets",
 ]

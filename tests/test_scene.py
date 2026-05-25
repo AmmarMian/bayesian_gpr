@@ -73,6 +73,17 @@ def test_save_load_roundtrip():
     np.testing.assert_allclose(s2.image, s.image)
 
 
+def test_save_load_preserves_alpha():
+    soil = SoilParams(eps_r=9.0, alpha=0.3)
+    s = Scene(grid=GRID, wavelet=WAVELET, soil=soil, rng_seed=0)
+    s.add(presets.Pipe(x=0.5, depth=0.3))
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "test_alpha.npz"
+        save_scene(s, p)
+        s2 = load_scene(p)
+    assert s2.soil.alpha == 0.3
+
+
 def test_save_load_preserves_clutter_noise():
     s = make_scene()
     s.render()
