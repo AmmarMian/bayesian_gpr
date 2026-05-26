@@ -152,8 +152,3 @@ scene.plot(observed=True)  # B-scan with truth hyperbola overlays clipped to vis
 
 `plot_scene_layout` colour-codes objects by fill: light blue = air, dark blue = water,
 grey = PVC/concrete, red hatch = void (negative polarity), dots = rebar.
-
-## Phase 2 (planned, not yet implemented)
-
-gprMax integration for realistic FDTD-based scenes and Peplinski heterogeneous-soil
-clutter. See `CLAUDE.md`.
